@@ -1,33 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import search from "./picture/search.jpg";
 import bigSearch from "./picture/bigSearch.png";
 
-import { DefaultStyle, Bar, Logo, Search } from "./uicomponents/uicomponents";
-import { useWindowSize } from "./hooks/hooks";
-import MainPage from "./pages/mainPage";
-import UserPage from './pages/userPage';
+import { DefaultStyle, Bar, Logo, Search, Main, MainBigSearch, MainDefaultText } from "./uicomponents/uicomponents";
+import { useWindowSize, getData } from "./utils/utils";
+
+const LoadUserPage = React.lazy(() => import("./pages/userPage"))
 
 function App() {
   const [query, setQuery] = useState("");
   const [data, setData] = useState();
-  const [error, setError] = useState(false);
-  const [loading, setloading] = useState(false);
-  console.log(data)
+  const fn = () => {
+    window.open("./userPage.jsx")
+  
+  }
   const handleChange = (event) => {
     const {
       target: { value },
     } = event;
     setQuery(value);
   };
+
   const handleKeyDown = (event) => {
     const { keyCode } = event;
     if (keyCode === 13) {
-      fetch(`https://api.github.com/users/${query}`)
-      .then((response) => response.json())
-      .then((data) => setData({data: data}))
-      .catch((error) => console.log(error))
-  };
-}
+      setData(getData(query))
+    };
+  }
   return (
     <div>
       <DefaultStyle />
@@ -46,9 +45,20 @@ function App() {
           onKeyDown={handleKeyDown}
         />
       </Bar>
-      {/* <MainPage icon={bigSearch} /> */}
-      {data && <UserPage data={data}/>}
+      {data ?
+        (
+          <Suspense fallback={<div>... Load</div>}>
+            <LoadUserPage data={data} fn={fn}/>
+          </Suspense>
+        ) : (
+          <div>
+            <Main>
+              <MainBigSearch icon={bigSearch} />
+              <MainDefaultText>Start with searching<br /> a GitHub user</MainDefaultText>
+            </Main>
+          </div>
+        )}
     </div>
-	);
+  );
 }
 export default App;
